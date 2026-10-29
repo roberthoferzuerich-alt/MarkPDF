@@ -1,0 +1,53 @@
+name: pdf_writer
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  crop_image: ^1.0.17
+  file_picker: ^13.3.0
+  flutter:
+    sdk: flutter
+  flutter_markdown: ^0.7.7+1
+  http: ^1.6.0
+  image: ^4.12.0
+  image_picker: ^1.2.4
+  markdown: ^7.3.1
+  path_provider: ^2.1.6
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  syncfusion_flutter_pdfviewer: ^35.1.42
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.4
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/md/
+    - assets/icon/
+    - assets/img/
+    - assets/sound/
