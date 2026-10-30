@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import '../models/app_state.dart';
 import '../screens/image_editor_screen.dart';
 import '../services/file_service.dart';
@@ -65,12 +65,9 @@ class EditorToolbar extends StatelessWidget {
                   onTap: () async {
                     Navigator.pop(bottomSheetContext);
                     try {
-                      final path = await FileService.pickImageFromGallery();
-                      if (path != null && path.isNotEmpty) {
-                        final bytes = await File(path).readAsBytes();
-                        if (context.mounted) {
-                          await _openImageEditor(context, bytes, defaultAlt: 'Galerie-Foto');
-                        }
+                      final bytes = await FileService.pickImageBytes(source: ImageSource.gallery);
+                      if (bytes != null && bytes.isNotEmpty && context.mounted) {
+                        await _openImageEditor(context, bytes, defaultAlt: 'Galerie-Foto');
                       }
                     } catch (e) {
                       if (context.mounted) {
@@ -88,12 +85,9 @@ class EditorToolbar extends StatelessWidget {
                   onTap: () async {
                     Navigator.pop(bottomSheetContext);
                     try {
-                      final path = await FileService.pickImageFromCamera();
-                      if (path != null && path.isNotEmpty) {
-                        final bytes = await File(path).readAsBytes();
-                        if (context.mounted) {
-                          await _openImageEditor(context, bytes, defaultAlt: 'Kamerafoto');
-                        }
+                      final bytes = await FileService.pickImageBytes(source: ImageSource.camera);
+                      if (bytes != null && bytes.isNotEmpty && context.mounted) {
+                        await _openImageEditor(context, bytes, defaultAlt: 'Kamerafoto');
                       }
                     } catch (e) {
                       if (context.mounted) {

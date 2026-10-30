@@ -126,6 +126,17 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
+                          if (appState.editorFontSize != AppState.defaultEditorFontSize) ...[
+                            IconButton(
+                              icon: const Icon(Icons.restore, size: 20),
+                              tooltip: 'Auf Standard (14 pt) zurücksetzen',
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => appState.setEditorFontSize(AppState.defaultEditorFontSize),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
@@ -133,7 +144,9 @@ class SettingsScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '${appState.editorFontSize.toInt()} pt',
+                              appState.editorFontSize == AppState.defaultEditorFontSize
+                                  ? '${appState.editorFontSize.toInt()} pt · Standard'
+                                  : '${appState.editorFontSize.toInt()} pt',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.primary,
@@ -143,13 +156,97 @@ class SettingsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Slider(
-                        value: appState.editorFontSize,
-                        min: 12.0,
-                        max: 22.0,
-                        divisions: 10,
-                        label: '${appState.editorFontSize.toInt()} pt',
-                        onChanged: (val) => appState.setEditorFontSize(val),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          tickMarkShape: _StandardFontTickMarkShape(
+                            standardValue: AppState.defaultEditorFontSize,
+                            min: 12.0,
+                            max: 22.0,
+                            primaryColor: colorScheme.primary,
+                            tickColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
+                          ),
+                        ),
+                        child: Slider(
+                          value: appState.editorFontSize,
+                          min: 12.0,
+                          max: 22.0,
+                          divisions: 10,
+                          label: appState.editorFontSize == AppState.defaultEditorFontSize
+                              ? '${appState.editorFontSize.toInt()} pt (Standard)'
+                              : '${appState.editorFontSize.toInt()} pt',
+                          onChanged: (val) => appState.setEditorFontSize(val),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Row(
+                          children: [
+                            Text(
+                              '12 pt',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const Spacer(),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: appState.editorFontSize == AppState.defaultEditorFontSize
+                                      ? null
+                                      : () => appState.setEditorFontSize(AppState.defaultEditorFontSize),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: appState.editorFontSize == AppState.defaultEditorFontSize
+                                          ? colorScheme.primaryContainer.withValues(alpha: 0.6)
+                                          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: appState.editorFontSize == AppState.defaultEditorFontSize
+                                            ? colorScheme.primary.withValues(alpha: 0.6)
+                                            : colorScheme.outlineVariant,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          appState.editorFontSize == AppState.defaultEditorFontSize
+                                              ? Icons.bookmark_added_rounded
+                                              : Icons.restore_rounded,
+                                          size: 13,
+                                          color: appState.editorFontSize == AppState.defaultEditorFontSize
+                                              ? colorScheme.primary
+                                              : colorScheme.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '14 pt (Standard)',
+                                          style: theme.textTheme.labelSmall?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: appState.editorFontSize == AppState.defaultEditorFontSize
+                                                ? colorScheme.primary
+                                                : colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '22 pt',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const Divider(height: 24),
                       Row(
@@ -588,3 +685,85 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
+
+/// Ein individueller TickMarkShape für den Schriftgrößen-Regler,
+/// der die Standard-Schriftgröße (14 pt) optisch hervorhebt.
+class _StandardFontTickMarkShape extends SliderTickMarkShape {
+  const _StandardFontTickMarkShape({
+    required this.standardValue,
+    required this.min,
+    required this.max,
+    required this.primaryColor,
+    required this.tickColor,
+  });
+
+  static const double standardTickWidth = 3.5;
+  static const double standardTickHeight = 14.0;
+  static const double regularTickRadius = 2.0;
+
+  final double standardValue;
+  final double min;
+  final double max;
+  final Color primaryColor;
+  final Color tickColor;
+
+  @override
+  Size getPreferredSize({
+    required SliderThemeData sliderTheme,
+    required bool isEnabled,
+  }) {
+    return Size.fromRadius(regularTickRadius);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    required bool isEnabled,
+  }) {
+    final trackRect = (sliderTheme.trackShape ?? const RoundedRectSliderTrackShape())
+        .getPreferredRect(parentBox: parentBox, sliderTheme: sliderTheme);
+
+    final double progress = trackRect.width > 0
+        ? (textDirection == TextDirection.rtl
+                ? (trackRect.right - center.dx)
+                : (center.dx - trackRect.left)) /
+            trackRect.width
+        : 0.0;
+
+    final double tickValue = min + progress.clamp(0.0, 1.0) * (max - min);
+    final bool isStandard = (tickValue - standardValue).abs() < 0.25;
+
+    final canvas = context.canvas;
+
+    if (isStandard) {
+      // Prominenter vertikaler Markierungs-Pill für die Standard-Schriftgröße (14 pt)
+      final rrect = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: center,
+          width: standardTickWidth,
+          height: standardTickHeight,
+        ),
+        const Radius.circular(2.0),
+      );
+      canvas.drawRRect(rrect, Paint()..color = primaryColor);
+
+      // Kleiner Zeiger-Marker direkt über der Markierung
+      final trianglePath = Path()
+        ..moveTo(center.dx - 3.5, center.dy - 8.5)
+        ..lineTo(center.dx + 3.5, center.dy - 8.5)
+        ..lineTo(center.dx, center.dy - 4.5)
+        ..close();
+      canvas.drawPath(trianglePath, Paint()..color = primaryColor);
+    } else {
+      // Dezenter Punkt für reguläre Ticks
+      canvas.drawCircle(center, regularTickRadius, Paint()..color = tickColor);
+    }
+  }
+}
+

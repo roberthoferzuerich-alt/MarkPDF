@@ -237,9 +237,11 @@ class MarkdownToPdfService {
               path = uri.toFilePath();
             }
           }
-          final file = File(path);
-          if (await file.exists()) {
-            bytes = await file.readAsBytes();
+          if (!kIsWeb) {
+            final file = File(path);
+            if (await file.exists()) {
+              bytes = await file.readAsBytes();
+            }
           }
         }
 

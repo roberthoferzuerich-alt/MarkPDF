@@ -132,6 +132,41 @@ void main() {
       expect(appState.editorBackgroundStyle, equals(EditorBackgroundStyle.oceanTeal));
     });
 
+    testWidgets('SettingsScreen marks standard font size (14 pt) on slider and allows reset', (tester) async {
+      final appState = AppState();
+      addTearDown(appState.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SettingsScreen(appState: appState),
+        ),
+      );
+
+      // Verify initial state is standard 14 pt
+      expect(appState.editorFontSize, equals(AppState.defaultEditorFontSize));
+      expect(find.text('14 pt · Standard'), findsOneWidget);
+      expect(find.text('14 pt (Standard)'), findsOneWidget);
+      expect(find.byIcon(Icons.restore), findsNothing);
+
+      // Change font size to 18 pt
+      appState.setEditorFontSize(18.0);
+      await tester.pumpAndSettle();
+
+      expect(find.text('18 pt'), findsOneWidget);
+      expect(find.byIcon(Icons.restore), findsOneWidget);
+
+      // Tap on the 14 pt standard pill below slider to restore
+      final standardPill = find.text('14 pt (Standard)');
+      expect(standardPill, findsOneWidget);
+      await tester.tap(standardPill);
+      await tester.pumpAndSettle();
+
+      // Should be restored to 14 pt
+      expect(appState.editorFontSize, equals(14.0));
+      expect(find.text('14 pt · Standard'), findsOneWidget);
+      expect(find.byIcon(Icons.restore), findsNothing);
+    });
+
     testWidgets('AboutMeScreen renders without overflow on 360x740 mobile screen', (tester) async {
       tester.view.physicalSize = const Size(360, 740);
       tester.view.devicePixelRatio = 1.0;

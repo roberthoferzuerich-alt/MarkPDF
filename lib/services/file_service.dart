@@ -61,6 +61,38 @@ class FileService {
     return null;
   }
 
+  /// Wählt Bild-Bytes aus Galerie oder Kamera (100% kompatibel mit Web, Desktop und Mobile).
+  static Future<Uint8List?> pickImageBytes({ImageSource source = ImageSource.gallery}) async {
+    // 1. Zuerst ImagePicker versuchen
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (picked != null) {
+        return await picked.readAsBytes();
+      }
+    } catch (e) {
+      debugPrint('ImagePicker nicht verfügbar ($e), nutze FilePicker Fallback...');
+    }
+
+    // 2. Zuverlässiger Fallback über FilePicker
+    try {
+      final files = await FilePicker.pickFiles(
+        type: FileType.image,
+      );
+      if (files.isNotEmpty) {
+        return await files.first.xFile.readAsBytes();
+      }
+    } catch (e) {
+      debugPrint('Fehler beim Auswählen des Bildes via FilePicker: $e');
+    }
+    return null;
+  }
+
   /// Wählt ein Bild aus der Galerie aus und gibt den lokalen Pfad zurück.
   static Future<String?> pickImageFromGallery() async {
     // 1. Zuerst ImagePicker versuchen
@@ -89,13 +121,15 @@ class FileService {
         if (file.path != null && file.path!.isNotEmpty) {
           return file.path;
         }
-        // Falls Android Scoped Storage / Content-URI nutzt, Bytes in Cache-Datei spiegeln
-        final bytes = await file.xFile.readAsBytes();
-        final tempDir = await getTemporaryDirectory();
-        final ext = file.name.contains('.') ? file.name.split('.').last : 'jpg';
-        final cached = File('${tempDir.path}/img_${DateTime.now().millisecondsSinceEpoch}.$ext');
-        await cached.writeAsBytes(bytes);
-        return cached.path;
+        if (!kIsWeb) {
+          // Falls Android Scoped Storage / Content-URI nutzt, Bytes in Cache-Datei spiegeln
+          final bytes = await file.xFile.readAsBytes();
+          final tempDir = await getTemporaryDirectory();
+          final ext = file.name.contains('.') ? file.name.split('.').last : 'jpg';
+          final cached = File('${tempDir.path}/img_${DateTime.now().millisecondsSinceEpoch}.$ext');
+          await cached.writeAsBytes(bytes);
+          return cached.path;
+        }
       }
     } catch (e) {
       debugPrint('Fehler beim Auswählen des Bildes via FilePicker: $e');

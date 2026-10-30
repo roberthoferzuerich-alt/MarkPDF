@@ -48,7 +48,8 @@ class AppState extends ChangeNotifier {
   }
 
   // Editor-Einstellungen
-  double _editorFontSize = 14.0;
+  static const double defaultEditorFontSize = 14.0;
+  double _editorFontSize = defaultEditorFontSize;
   double get editorFontSize => _editorFontSize;
 
   void setEditorFontSize(double size) {

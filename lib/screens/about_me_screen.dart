@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../services/file_service.dart';
 
@@ -102,17 +103,13 @@ class _AboutMeScreenState extends State<AboutMeScreen> {
 
   Future<void> _pickFromGallery() async {
     try {
-      final path = await FileService.pickImageFromGallery();
-      if (path != null && path.isNotEmpty) {
-        final file = File(path);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          await _persistAvatar(bytes, sourcePath: path);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profilbild erfolgreich aus der Galerie importiert!')),
-            );
-          }
+      final bytes = await FileService.pickImageBytes(source: ImageSource.gallery);
+      if (bytes != null && bytes.isNotEmpty) {
+        await _persistAvatar(bytes);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profilbild erfolgreich aus der Galerie importiert!')),
+          );
         }
       }
     } catch (e) {
@@ -126,17 +123,13 @@ class _AboutMeScreenState extends State<AboutMeScreen> {
 
   Future<void> _pickFromCamera() async {
     try {
-      final path = await FileService.pickImageFromCamera();
-      if (path != null && path.isNotEmpty) {
-        final file = File(path);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          await _persistAvatar(bytes, sourcePath: path);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Kamerafoto erfolgreich als Profilbild übernommen!')),
-            );
-          }
+      final bytes = await FileService.pickImageBytes(source: ImageSource.camera);
+      if (bytes != null && bytes.isNotEmpty) {
+        await _persistAvatar(bytes);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kamerafoto erfolgreich als Profilbild übernommen!')),
+          );
         }
       }
     } catch (e) {

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:crop_image/crop_image.dart';
 import 'package:flutter/foundation.dart';
@@ -157,11 +158,17 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
       final finalWidth = processed['width'] as int;
       final finalHeight = processed['height'] as int;
 
-      // 5. Im Cache-Ordner der App speichern
-      final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final savedFile = File('${tempDir.path}/web_img_$timestamp.jpg');
-      await savedFile.writeAsBytes(finalBytes);
+      // 5. Auf Web als Data-URI, auf nativen Plattformen im Cache-Ordner speichern
+      String imagePath;
+      if (kIsWeb) {
+        imagePath = 'data:image/jpeg;base64,${base64Encode(finalBytes)}';
+      } else {
+        final tempDir = await getTemporaryDirectory();
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final savedFile = File('${tempDir.path}/web_img_$timestamp.jpg');
+        await savedFile.writeAsBytes(finalBytes);
+        imagePath = savedFile.path;
+      }
 
       final altText = _altController.text.trim().isNotEmpty ? _altController.text.trim() : 'Bild';
 
@@ -169,7 +176,7 @@ class _ImageEditorScreenState extends State<ImageEditorScreen> {
         Navigator.pop(
           context,
           EditedImageResult(
-            path: savedFile.path,
+            path: imagePath,
             alt: altText,
             width: finalWidth,
             height: finalHeight,
