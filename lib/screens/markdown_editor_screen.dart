@@ -612,15 +612,19 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
                         height: 1.6,
                         color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
                       ),
-                      code: TextStyle(
-                        backgroundColor: isDark ? const Color(0xFF334155) : Colors.pink.shade50,
-                        color: isDark ? const Color(0xFFF472B6) : Colors.pink.shade700,
+                      code: const TextStyle(
+                        backgroundColor: Color(0xFFF1F5F9),
+                        color: Color(0xFF1E293B),
                         fontFamily: 'monospace',
                         fontSize: 13,
                       ),
                       codeblockDecoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF020617) : const Color(0xFF0F172A),
+                        color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFCBD5E1),
+                          width: 1,
+                        ),
                       ),
                       blockquoteDecoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
