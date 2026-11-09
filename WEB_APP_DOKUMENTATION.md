@@ -203,6 +203,7 @@ Klone den vorbereiteten Branch `web-release` direkt in das Webverzeichnis:
 sudo rm -rf /var/www/pdf_writer
 sudo git clone -b web-release https://github.com/roberthoferzuerich-alt/MarkPDF.git /var/www/pdf_writer
 sudo chown -R www-data:www-data /var/www/pdf_writer
+sudo git config --global --add safe.directory /var/www/pdf_writer
 ```
 
 ### Router-Portweiterleitung (Swisscom Internet-Box)
@@ -249,4 +250,5 @@ cd /var/www/pdf_writer && sudo git pull
 | **Ältere Version wird im Browser angezeigt** | Aggressives Browser-Caching des Service-Workers. | `Strg + F5` (Hard Reload) im Browser drücken oder PWA kurz deinstallieren und neu laden. |
 | **PDF-Vorschau bleibt im Web weiß** | `pdf.js` fehlt in `web/index.html`. | Sicherstellen, dass der Script-Tag für `pdf.min.mjs` vor `flutter_bootstrap.js` eingebunden ist. |
 | **Permission Denied in `/var/www/pdf_writer`** | Nginx hat keine Leserechte für die Git-Dateien. | `sudo chown -R www-data:www-data /var/www/pdf_writer` ausführen. |
+| **Dubiose Besitzverhältnisse bei `sudo git pull`** | Ordner gehört `www-data`, Git wird aber mit `sudo` (`root`) ausgeführt. | Einmalig `sudo git config --global --add safe.directory /var/www/pdf_writer` ausführen. |
 | **SSL-Zertifikatsfehler beim Aufruf** | Portweiterleitung oder Domain-Name passt nicht zum Let's Encrypt Zertifikat. | URL muss exakt mit dem Zertifikat übereinstimmen: `https://rhz.internet-box.ch:8048/`. |

@@ -15,6 +15,7 @@ class _PdfFonts {
   final pw.Font italic;
   final pw.Font boldItalic;
   final pw.Font mono;
+  final List<pw.Font> fallbacks;
 
   const _PdfFonts({
     required this.regular,
@@ -22,37 +23,94 @@ class _PdfFonts {
     required this.italic,
     required this.boldItalic,
     required this.mono,
+    this.fallbacks = const [],
   });
+
+  /// Erstellt einen [pw.TextStyle] mit integriertem Fallback für Symbole und Box-Drawing.
+  pw.TextStyle style({
+    pw.Font? font,
+    double? fontSize,
+    pw.FontWeight? fontWeight,
+    pw.FontStyle? fontStyle,
+    PdfColor? color,
+    double? lineSpacing,
+    pw.TextDecoration? decoration,
+    pw.BoxDecoration? background,
+  }) {
+    return pw.TextStyle(
+      font: font ?? regular,
+      fontBold: bold,
+      fontItalic: italic,
+      fontBoldItalic: boldItalic,
+      fontFallback: fallbacks,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      fontStyle: fontStyle,
+      color: color,
+      lineSpacing: lineSpacing,
+      decoration: decoration,
+      background: background,
+    );
+  }
 
   static Future<_PdfFonts> load({bool isSerif = false}) async {
     try {
+      // 1. Fallback-Fonts für Symbole, Box-Drawing Linien und Sonderzeichen
+      final List<pw.Font> fallbackFonts = [];
+      try {
+        final symbols2 = await PdfGoogleFonts.notoSansSymbols2Regular();
+        fallbackFonts.add(symbols2);
+      } catch (e) {
+        debugPrint('Fallback notoSansSymbols2 konnte nicht geladen werden: $e');
+      }
+      try {
+        final symbols = await PdfGoogleFonts.notoSansSymbolsRegular();
+        fallbackFonts.add(symbols);
+      } catch (e) {
+        debugPrint('Fallback notoSansSymbols konnte nicht geladen werden: $e');
+      }
+      try {
+        final notoSans = await PdfGoogleFonts.notoSansRegular();
+        fallbackFonts.add(notoSans);
+      } catch (e) {
+        debugPrint('Fallback notoSans konnte nicht geladen werden: $e');
+      }
+
+      // 2. Monospace-Schriftart: Fira Code rendert Box-Drawing Linien (Kästen) nativ
+      pw.Font monoFont;
+      try {
+        monoFont = await PdfGoogleFonts.firaCodeRegular();
+      } catch (e) {
+        monoFont = await PdfGoogleFonts.robotoMonoRegular();
+      }
+
       if (isSerif) {
         final regular = await PdfGoogleFonts.merriweatherRegular();
         final bold = await PdfGoogleFonts.merriweatherBold();
         final italic = await PdfGoogleFonts.merriweatherItalic();
         final boldItalic = await PdfGoogleFonts.merriweatherBoldItalic();
-        final mono = await PdfGoogleFonts.robotoMonoRegular();
 
         return _PdfFonts(
           regular: regular,
           bold: bold,
           italic: italic,
           boldItalic: boldItalic,
-          mono: mono,
+          mono: monoFont,
+          fallbacks: fallbackFonts,
         );
       } else {
         final regular = await PdfGoogleFonts.robotoRegular();
         final bold = await PdfGoogleFonts.robotoBold();
         final italic = await PdfGoogleFonts.robotoItalic();
         final boldItalic = await PdfGoogleFonts.robotoBoldItalic();
-        final mono = await PdfGoogleFonts.robotoMonoRegular();
 
         return _PdfFonts(
           regular: regular,
           bold: bold,
           italic: italic,
           boldItalic: boldItalic,
-          mono: mono,
+          mono: monoFont,
+          fallbacks: fallbackFonts,
         );
       }
     } catch (e) {
@@ -63,6 +121,7 @@ class _PdfFonts {
         italic: isSerif ? pw.Font.timesItalic() : pw.Font.helveticaOblique(),
         boldItalic: isSerif ? pw.Font.timesBoldItalic() : pw.Font.helveticaBoldOblique(),
         mono: pw.Font.courier(),
+        fallbacks: const [],
       );
     }
   }
@@ -104,6 +163,7 @@ class MarkdownToPdfService {
         bold: fonts.bold,
         italic: fonts.italic,
         boldItalic: fonts.boldItalic,
+        fontFallback: fonts.fallbacks,
       ),
     );
 
@@ -139,8 +199,7 @@ class MarkdownToPdfService {
             ),
             child: pw.Text(
               title,
-              style: pw.TextStyle(
-                font: fonts.regular,
+              style: fonts.style(
                 fontSize: 8.5,
                 color: themeConfig.textMutedColor,
               ),
@@ -162,16 +221,14 @@ class MarkdownToPdfService {
               children: [
                 pw.Text(
                   'MarkPDF',
-                  style: pw.TextStyle(
-                    font: fonts.regular,
+                  style: fonts.style(
                     fontSize: 8.5,
                     color: themeConfig.textMutedColor,
                   ),
                 ),
                 pw.Text(
                   'Seite ${context.pageNumber} von ${context.pagesCount}',
-                  style: pw.TextStyle(
-                    font: fonts.regular,
+                  style: fonts.style(
                     fontSize: 8.5,
                     color: themeConfig.textMutedColor,
                   ),
@@ -288,7 +345,7 @@ class MarkdownToPdfService {
         if (clean.isNotEmpty) {
           return pw.Padding(
             padding: const pw.EdgeInsets.only(bottom: 6),
-            child: pw.Text(clean, style: pw.TextStyle(font: fonts.regular, fontSize: 10.5, color: theme.textColor)),
+            child: pw.Text(clean, style: fonts.style(fontSize: 10.5, color: theme.textColor)),
           );
         }
       }
@@ -331,7 +388,7 @@ class MarkdownToPdfService {
             node.children,
             fonts,
             theme,
-            pw.TextStyle(font: fonts.regular, fontSize: 10.5, color: theme.textColor, lineSpacing: 1.5),
+            fonts.style(fontSize: 10.5, color: theme.textColor, lineSpacing: 1.5),
           );
           return pw.Padding(
             padding: const pw.EdgeInsets.only(bottom: 8),
@@ -348,7 +405,7 @@ class MarkdownToPdfService {
               currentInline,
               fonts,
               theme,
-              pw.TextStyle(font: fonts.regular, fontSize: 10.5, color: theme.textColor, lineSpacing: 1.5),
+              fonts.style(fontSize: 10.5, color: theme.textColor, lineSpacing: 1.5),
             );
             if (spans.isNotEmpty) {
               pWidgets.add(
@@ -453,7 +510,7 @@ class MarkdownToPdfService {
                   padding: const pw.EdgeInsets.only(top: 4),
                   child: pw.Text(
                     alt,
-                    style: pw.TextStyle(
+                    style: fonts.style(
                       font: fonts.italic,
                       fontStyle: pw.FontStyle.italic,
                       fontSize: 9,
@@ -479,7 +536,7 @@ class MarkdownToPdfService {
       ),
       child: pw.Text(
         '[Bild: ${alt != null && alt.isNotEmpty ? alt : src}]',
-        style: pw.TextStyle(
+        style: fonts.style(
           font: fonts.italic,
           fontSize: 9,
           color: theme.textMutedColor,
@@ -504,7 +561,7 @@ class MarkdownToPdfService {
       element.children,
       fonts,
       theme,
-      pw.TextStyle(
+      fonts.style(
         font: fonts.bold,
         fontWeight: pw.FontWeight.bold,
         fontSize: fontSize,
@@ -564,7 +621,7 @@ class MarkdownToPdfService {
           inlineChildren,
           fonts,
           theme,
-          pw.TextStyle(font: fonts.regular, fontSize: 10.5, color: theme.textColor, lineSpacing: 1.3),
+          fonts.style(fontSize: 10.5, color: theme.textColor, lineSpacing: 1.3),
         );
 
         final bulletText = isOrdered ? '$index. ' : '• ';
@@ -578,7 +635,7 @@ class MarkdownToPdfService {
                 width: prefixWidth,
                 child: pw.Text(
                   bulletText,
-                  style: pw.TextStyle(
+                  style: fonts.style(
                     font: isOrdered ? fonts.bold : fonts.regular,
                     fontSize: 10.5,
                     color: isOrdered ? theme.primaryColor : theme.textMutedColor,
@@ -633,7 +690,7 @@ class MarkdownToPdfService {
       element.children,
       fonts,
       theme,
-      pw.TextStyle(
+      fonts.style(
         font: fonts.italic,
         fontStyle: pw.FontStyle.italic,
         fontSize: 10,
@@ -677,7 +734,7 @@ class MarkdownToPdfService {
       ),
       child: pw.Text(
         codeContent,
-        style: pw.TextStyle(
+        style: fonts.style(
           font: fonts.mono,
           fontSize: 9,
           color: theme.codeBlockTextColor,
@@ -704,7 +761,7 @@ class MarkdownToPdfService {
             cellNode.children,
             fonts,
             theme,
-            pw.TextStyle(
+            fonts.style(
               font: isHeader ? fonts.bold : fonts.regular,
               fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
               fontSize: 9.5,
@@ -768,14 +825,20 @@ class MarkdownToPdfService {
     );
   }
 
-  /// Bereinigt Emojis, die nicht in Standard-TrueType-Schriften vorkommen.
+  /// Filtert komplexe Farbemojis heraus, die in Standard-TrueType-PDFs nicht als
+  /// skalierbare Vektorglyphen vorliegen, behält aber Unicode-Symbole, Pfeile,
+  /// Box-Drawing und Dingbats (✓, ➔, ★, etc.) bei.
   static final RegExp _unsupportedGlyphsRegex = RegExp(
-    r'[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]',
+    r'[\u{1F300}-\u{1FAFF}]',
     unicode: true,
   );
 
   static String _sanitizeText(String text) {
-    return text.replaceAll(_unsupportedGlyphsRegex, '');
+    // Wandelt seltene vertikale Ellipsis-Varianten in Standard-Symbole um
+    final normalized = text
+        .replaceAll('︙', '⋮')
+        .replaceAll(_unsupportedGlyphsRegex, '');
+    return normalized;
   }
 
   /// Verarbeitet Inline-Formatierungen (Fett, Kursiv, Inline-Code, Links, Strikethrough).
@@ -821,7 +884,7 @@ class MarkdownToPdfService {
             spans.add(
               pw.TextSpan(
                 text: ' $codeText ',
-                style: pw.TextStyle(
+                style: fonts.style(
                   font: fonts.mono,
                   fontSize: (baseStyle.fontSize ?? 10.5) * 0.9,
                   color: theme.primaryColor,

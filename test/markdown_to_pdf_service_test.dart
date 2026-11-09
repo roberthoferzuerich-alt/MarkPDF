@@ -47,5 +47,26 @@ Und ein Bild mit Fallback:
       final header = String.fromCharCodes(bytes.take(5));
       expect(header, equals('%PDF-'));
     });
+
+    test('generiert gültige PDF-Bytes für Box-Drawing Kastenlinien und Symbole', () async {
+      const markdown = '''
+# Kasten & Symbole Test
+
+Tippen Sie auf das 3-Punkte-Menü ⋮ oder Häkchen ✓ und Pfeil ➔.
+
+```
+┌───────────────────────────────────────┐
+│ [Logo] Rezeptschatz    [Robert Hofer] │
+├───────────────────────────────────────┤
+│ Rezepte > | Neues Rezept | Einkäufe   │
+└───────────────────────────────────────┘
+```
+''';
+      final bytes = await MarkdownToPdfService.generatePdfBytes(markdown, title: 'Box-Drawing-Test');
+
+      expect(bytes, isNotEmpty);
+      final header = String.fromCharCodes(bytes.take(5));
+      expect(header, equals('%PDF-'));
+    });
   });
 }

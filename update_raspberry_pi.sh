@@ -21,6 +21,7 @@ if [ ! -d "$WEB_DIR/.git" ]; then
     sudo git clone -b "$BRANCH" "$REPO_URL" "$WEB_DIR"
 else
     echo "[1/3] Aktualisierung: Ziehe neueste Version von GitHub..."
+    sudo git config --global --add safe.directory "$WEB_DIR"
     cd "$WEB_DIR"
     sudo git fetch origin "$BRANCH"
     sudo git reset --hard "origin/$BRANCH"
